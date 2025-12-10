@@ -16,8 +16,10 @@ const VendorSignup = () => {
 
   const onSubmit = (data) => {
     console.log("Form submitted:", data);
-    // after successful signup, navigate to dashboard (or any page)
-    navigate("/");
+    // Save form data to localStorage for the next step
+    localStorage.setItem("vendorSignUpData", JSON.stringify(data));
+    // Navigate to vendor proceed page
+    navigate("/vendorproceed");
   };
 
   const togglePasswordVisibility = () => {
@@ -298,15 +300,13 @@ const VendorSignup = () => {
             </div>
 
             {/* Submit Button */}
-            {/* <button
+            <button
               type="button"
               onClick={handleSubmit(onSubmit)}
               className="submit-btn"
             >
               Proceed
-            </button> */}
-
-            <a href="/vendorproceed" className="submit-btn">Proceed</a>
+            </button>
             
             {/* <p>Want to be a vendor? <a href="/vendorsignup" className="login-btn">Click here</a></p><br />
             <p>Already have an account? <a href="/signin" className="login-btn">Click here</a></p> */}

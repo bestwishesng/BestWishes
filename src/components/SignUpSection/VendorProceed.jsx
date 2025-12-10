@@ -1,11 +1,15 @@
 // SignUp.jsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
+import { registerVendor } from "../../api/auth";
 import "./VendorProceed.css";
 
 const VendorComplete = () => {
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [signUpData, setSignUpData] = useState(null);
   const navigate = useNavigate();
 
   const {
@@ -14,10 +18,84 @@ const VendorComplete = () => {
     formState: { errors },
   } = useForm();
 
-  const onSubmit = (data) => {
-    console.log("Form submitted:", data);
-    // after successful signup, navigate to dashboard (or any page)
-    navigate("/vendordashboard");
+  useEffect(() => {
+    // Retrieve data from first form
+    const storedData = localStorage.getItem("vendorSignUpData");
+    if (!storedData) {
+      // If no data from first form, redirect back to signup
+      navigate("/vendorsignup");
+      return;
+    }
+    setSignUpData(JSON.parse(storedData));
+  }, [navigate]);
+
+  const parseCountryCity = (countryCityString) => {
+    // Parse "Country, City" format (e.g., "Nigeria, Lagos")
+    if (!countryCityString) return { country: "", city: "" };
+    
+    const parts = countryCityString.split(",").map(part => part.trim());
+    if (parts.length >= 2) {
+      return {
+        country: parts[0],
+        city: parts[1]
+      };
+    }
+    // If format is different, assume the whole string is the city
+    return {
+      country: "",
+      city: countryCityString
+    };
+  };
+
+  const onSubmit = async (data) => {
+    if (!signUpData) {
+      setError("Please complete the first step of registration");
+      return;
+    }
+
+    setIsLoading(true);
+    setError("");
+
+    try {
+      // Parse country and city from countryCity field
+      const { country, city } = parseCountryCity(data.countryCity);
+
+      // Combine data from both forms
+      const registrationData = {
+        first_name: signUpData.firstName,
+        last_name: signUpData.lastName,
+        email: signUpData.email,
+        password: signUpData.password,
+        phone: signUpData.phone,
+        business_name: data.fullName,
+        business_type: data.businessType,
+        business_description: data.businessDescription,
+        city_of_operation: city || data.countryCity,
+        country: country || data.countryCity,
+      };
+
+      console.log("Registration data:", registrationData);
+
+      // Call the API
+      const response = await registerVendor(registrationData);
+      
+      console.log("API Response:", response.data);
+
+      // Clear localStorage after successful registration
+      localStorage.removeItem("vendorSignUpData");
+
+      // Navigate to dashboard or success page
+      navigate("/vendordashboard");
+    } catch (err) {
+      console.error("Registration error:", err);
+      setError(
+        err.response?.data?.message || 
+        err.message || 
+        "Registration failed. Please try again."
+      );
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const togglePasswordVisibility = () => {
@@ -49,6 +127,20 @@ const VendorComplete = () => {
 
           {/* Title and Subtitle */}
           <h1 className="title-login">Your Business Information</h1>
+
+          {/* Error Message */}
+          {error && (
+            <div className="error-message" style={{ 
+              marginBottom: "1rem", 
+              padding: "0.75rem", 
+              backgroundColor: "#fee", 
+              color: "#c33", 
+              borderRadius: "4px",
+              textAlign: "center"
+            }}>
+              {error}
+            </div>
+          )}
 
           {/* Form */}
           <div className="login-form">
@@ -390,8 +482,9 @@ const VendorComplete = () => {
               type="button"
               onClick={handleSubmit(onSubmit)}
               className="submit-btn"
+              disabled={isLoading}
             >
-              Complete Sign Up
+              {isLoading ? "Processing..." : "Complete Sign Up"}
             </button>
 
             {/* <a href="#" className="submit-btn">Complete Sign Up</a> */}

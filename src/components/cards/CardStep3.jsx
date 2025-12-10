@@ -4,7 +4,7 @@ import "./CardStep3.css";
 import MusicCard from "./MusicCard";
 import confetti from "canvas-confetti";
 
-function CardStep3({ onFinish, formData, onBack}) {
+function CardStep3({ onFinish, formData, onBack, submitState }) {
   const [showPreview, setShowPreview] = useState(false);
   const [currentPage, setCurrentPage] = useState(0); // 0 = gift box, 1–5 = card pages
   const [imagePreview, setImagePreview] = useState(null);
@@ -161,10 +161,25 @@ function CardStep3({ onFinish, formData, onBack}) {
           <button type="button" className="save-btn" onClick={handleLivePreview}>
             Live Preview
           </button>
-          <button type="button" onClick={onFinish} className="finish-btn">
-            Send Now
+          <button
+            type="button"
+            onClick={onFinish}
+            className="finish-btn"
+            disabled={submitState?.loading}
+          >
+            {submitState?.loading ? "Sending..." : "Send Now"}
           </button>
         </div>
+        {submitState?.error && (
+          <div className="submit-error" role="alert">
+            {submitState.error}
+          </div>
+        )}
+        {submitState?.message && !submitState?.error && (
+          <div className="submit-success" role="status">
+            {submitState.message}
+          </div>
+        )}
       </div>
 
       {showPreview && (

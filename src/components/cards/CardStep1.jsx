@@ -1,6 +1,6 @@
 
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import SlideUp from "../../ui/SlideUp";
 import "./CardStep1.css";
 
@@ -41,11 +41,14 @@ function CardStep1({ register, errors, onNext, onBack, watch, setValue }) {
     setIsSendYourself(false);
     setValue("senderName", "");
     setValue("senderEmail", "");
+    setValue("isAnonymous", true);
+    setValue("isSendYourself", false);
   };
 
   const handleAnonCancel = () => {
     setShowAnonWarning(false);
     setIsAnonymous(false);
+    setValue("isAnonymous", false);
   };
 
   const handleSendYourselfToggle = () => {
@@ -54,12 +57,21 @@ function CardStep1({ register, errors, onNext, onBack, watch, setValue }) {
     if (nextState) {
       setIsAnonymous(false);
     }
+    setValue("isAnonymous", false);
+    setValue("isSendYourself", nextState);
   };
+
+  useEffect(() => {
+    setValue("isAnonymous", isAnonymous);
+    setValue("isSendYourself", isSendYourself);
+  }, [isAnonymous, isSendYourself, setValue]);
 
   return (
     <SlideUp delay={0.6}>
       <div className="schedule-container">
         <div className="form-container">
+          <input type="hidden" value={isAnonymous} {...register("isAnonymous")} />
+          <input type="hidden" value={isSendYourself} {...register("isSendYourself")} />
           {/* Send Anonymously */}
           <div
             className="toggle-row"

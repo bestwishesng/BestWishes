@@ -1,14 +1,15 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar/Navbar";
 import Footer from "../ui/Footer";
+import { getCardImages } from "../api/cards";
 import "./CreateTemplate.css";
 
 function CreateTemplate() {
   const navigate = useNavigate();
 
   // Your template images (in /public/templates/)
-  const templates = [
+  const fallbackTemplates = [
     { id: 1, preview: "/templates/christmas1.webp", category: "Christmas" },
     { id: 2, preview: "/templates/christmas2.webp", category: "Christmas" },
     { id: 3, preview: "/templates/christmas3.webp", category: "Christmas" },
@@ -78,26 +79,52 @@ function CreateTemplate() {
     { id: 66, preview: "/templates/occasion1.webp", category: "Special Occasion" },
     { id: 67, preview: "/templates/occasion2.webp", category: "Special Occasion" },
     { id: 68, preview: "/templates/occasion3.webp", category: "Special Occasion" },
-  ];
+  ].map((template) => ({ ...template, image: template.preview }));
 
-  const categories = [
-    "All",
-    "Birthday",
-    "Thank You",
-    "Congratulations",
-    "Get Well Soon",
-    "Love & Romance",
-    "New Year Cards",
-    "Anniversary",
-    "Christmas",
-    "Easter Cards",
-    "Special Occasion",
-    "Situationships",
-    "Boyfriend's Day",
-    "Postpartum",
-  ];
-
+  const [templates, setTemplates] = useState(fallbackTemplates);
   const [activeCategory, setActiveCategory] = useState("All");
+  const [loadingTemplates, setLoadingTemplates] = useState(false);
+  const [templateError, setTemplateError] = useState("");
+
+  const normalizeImageUrl = (url) => {
+    if (!url) return "";
+    const cleaned = url.replace(/^https?:\/\//i, "").replace(/^\/+/g, "");
+    return `https://${cleaned}`;
+  };
+
+  useEffect(() => {
+    const fetchTemplates = async () => {
+      setLoadingTemplates(true);
+      setTemplateError("");
+      try {
+        const response = await getCardImages();
+        const apiTemplates = response?.data?.data || [];
+        if (apiTemplates.length) {
+          const mapped = apiTemplates.map((item) => ({
+            id: item.id,
+            preview: normalizeImageUrl(item.image),
+            image: normalizeImageUrl(item.image),
+            category: item.label || "Other",
+            label: item.label || "Other",
+          }));
+          setTemplates(mapped);
+          return;
+        }
+      } catch (error) {
+        console.error("Failed to load card images", error);
+        setTemplateError("Unable to load latest templates. Showing defaults.");
+      } finally {
+        setLoadingTemplates(false);
+      }
+    };
+
+    fetchTemplates();
+  }, []);
+
+  const categories = useMemo(() => {
+    const unique = new Set(templates.map((t) => t.category || "Other"));
+    return ["All", ...Array.from(unique)];
+  }, [templates]);
 
   const handleSelect = (template) => {
     navigate("/create-card", { state: { template } });
@@ -120,6 +147,15 @@ function CreateTemplate() {
             music and a lot more features to create a special experience.
           </p>
         </div>
+
+        {templateError && (
+          <div className="template-error" role="alert">
+            {templateError}
+          </div>
+        )}
+        {loadingTemplates && (
+          <div className="template-loading">Loading templates...</div>
+        )}
 
         {/* Category Carousel */}
         <div className="category-carousel">

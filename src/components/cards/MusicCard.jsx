@@ -172,8 +172,9 @@ const MusicCard = ({ formData, showTemplateCover = false }) => {
                       }}
                     >
                       {slide.message}
-                      {slide.senderName && (
-                      <p
+                    </p>
+                    {slide.senderName && (
+                      <div
                         style={{
                           fontStyle: "italic",
                           color: slide.textColor,
@@ -184,12 +185,8 @@ const MusicCard = ({ formData, showTemplateCover = false }) => {
                         }}
                       >
                         {slide.senderName}
-                      </p>
+                      </div>
                     )}
-                    </p>
-
-                    {/* Sender/Anon signature under message */}
-                    
                   </>
                 )}
 
